@@ -11,7 +11,6 @@
     <link rel="stylesheet" type="text/css" href="./Assets/styles.css">
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css" />
-    <script src="https://code.jquery.com/jquery.js"></script>
     <title>Weather Dashboard</title>
 </head>
 
@@ -23,7 +22,7 @@
         </div>
     </nav>
     <!-- Main Content Container -->
-    <div class="container" style="max-width: 90%;">
+    <div class="container">
         <!-- Main Content Row -->
         <div class="row">
             <!-- City Search Bar -->
@@ -36,7 +35,7 @@
                     <input id="city-input" type="text" class="form-control" placeholder="Enter City Name"
                         aria-label="Enter city name">
                     <div class="input-group-append">
-                        <button class="btn btn-primary" type="button" id="search-button">
+                        <button class="btn btn-primary" type="button" id="search-button" title="Search">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -45,7 +44,7 @@
                 <!--Searched City List -->
                 <p><h6>Recently searched cities:</h6></p>
                 <!-- added ul with class to remove unordered list style from button -->
-                <ul class="is-hidden" style='list-style:none' id="historyList">
+                <ul class="is-hidden" id="historyList">
                 </ul>
             </div>
             <div class="col-sm-12 col-lg-8">
@@ -88,6 +87,7 @@
     </nav>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
 
+    <script src="./Assets/config.js"></script>
     <script src="./Assets/script.js"></script>
 </body>
 
