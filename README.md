@@ -64,6 +64,7 @@ Search history is managed through a JSON-parsed array in localStorage. This ensu
 
 ## 📧 Contact
 
-Feel free to reach out!
+Let's connect! Whether you have a question about this project or just want to say hi:
 
-[![Email](https://img.shields.io/badge/Email-lora.lainio.it%40gmail.com-blue)](mailto:lora.lainio.it@gmail.com)
+[![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/lora-lainio-1a3a55255/)
+[![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:lora.lainio.it@gmail.com)
