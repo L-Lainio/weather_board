@@ -56,12 +56,6 @@ Search history is managed through a JSON-parsed array in localStorage. This ensu
 2. Open `index.html` via Live Server in VS Code.
 3. Add your own OpenWeatherMap API key in the `assets/config.js` file.
 
-## Final Steps to Go Live:
-
-- Commit the README: `git add README.md && git commit -m "docs: update readme with badges and project details" && git push origin main`
-- Double check the GIF path: Ensure your gif is named `demo.gif` and is inside the `assets` folder so the link works.
-- Check GitHub Pages: Verify your live link works and that the badges show up correctly on the main repository page.
-
 ## 📧 Contact
 
 Let's connect! Whether you have a question about this project or just want to say hi:

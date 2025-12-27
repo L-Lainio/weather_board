@@ -161,7 +161,7 @@ async function getWeather(input) {
             geocodingURL = `https://api.openweathermap.org/geo/1.0/zip?zip=${trimmedInput},US&appid=${APIKey}`;
         } else {
             // City name
-            geocodingURL = `https://api.openweathermap.org/geo/1.0/direct?q=${trimmedInput}&limit=1&appid=${APIKey}`;
+            geocodingURL = `httpss://api.openweathermap.org/geo/1.0/direct?q=${trimmedInput}&limit=1&appid=${APIKey}`;
         }
         
         const geoResponse = await fetch(geocodingURL);
