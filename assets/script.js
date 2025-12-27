@@ -55,12 +55,77 @@ document.getElementById("search-button").addEventListener("click", function (eve
 
 	q = document.getElementById("city-input").value.trim();
 	if (q === "") {
-		showError("Please Enter Valid City Name!");
+		showError("Please Enter Valid City Name or ZIP Code!");
 		return;
 	}
 	getWeather(q);
 	saveToLocalStorage(q);
 });
+
+// Autocomplete functionality
+let debounceTimer;
+document.getElementById("city-input").addEventListener("input", function() {
+    clearTimeout(debounceTimer);
+    const value = this.value.trim();
+    if (value.length < 3 || /^\d+$/.test(value)) {
+        hideSuggestions();
+        return;
+    }
+    debounceTimer = setTimeout(() => {
+        fetchSuggestions(value);
+    }, 300);
+});
+
+function fetchSuggestions(query) {
+    fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.results) {
+                showSuggestions(data.results);
+            } else {
+                hideSuggestions();
+            }
+        })
+        .catch(error => {
+            console.error('Geocoding error:', error);
+            hideSuggestions();
+        });
+}
+
+function showSuggestions(results) {
+    const suggestionsDiv = document.getElementById("suggestions");
+    suggestionsDiv.innerHTML = "";
+    results.forEach(result => {
+        const item = document.createElement("div");
+        item.className = "suggestion-item";
+        item.innerHTML = `
+            <div class="suggestion-name">${result.name}</div>
+            <div class="suggestion-details">${result.admin1 || ''}, ${result.country}</div>
+        `;
+        item.addEventListener("click", () => {
+            document.getElementById("city-input").value = result.name;
+            hideSuggestions();
+            // Auto-search on selection
+            document.getElementById("search-button").click();
+        });
+        suggestionsDiv.appendChild(item);
+    });
+    suggestionsDiv.style.display = "block";
+}
+
+function hideSuggestions() {
+    document.getElementById("suggestions").style.display = "none";
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener("click", function(e) {
+    const input = document.getElementById("city-input");
+    const suggestions = document.getElementById("suggestions");
+    if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+        hideSuggestions();
+    }
+});
+
 // Function to create Button for searched city
 function createRecentSearchBtn(q) {
 	var newLi = document.createElement("li");
@@ -82,20 +147,57 @@ function convertToC(fahrenheit) {
 	return celcius;
 }
 
-//Function to get weather details
-async function getWeather(q) {
-    // Show loading
+//Function to get weather details with two-step geocoding
+async function getWeather(input) {
     showLoading(true);
     
     try {
-        const queryURL = `https://api.openweathermap.org/data/2.5/weather?q=${q}&units=imperial&appid=${APIKey}`;
-        const response = await fetch(queryURL);
+        // Step 1: Geocode the input to get lat/lon
+        let geocodingURL;
+        const trimmedInput = input.trim();
         
-        if (!response.ok) {
-            throw new Error(`City not found. Check spelling or enter a city code. (${response.status})`);
+        if (/^\d{5}$/.test(trimmedInput)) {
+            // ZIP code
+            geocodingURL = `http://api.openweathermap.org/geo/1.0/zip?zip=${trimmedInput},US&appid=${APIKey}`;
+        } else {
+            // City name
+            geocodingURL = `http://api.openweathermap.org/geo/1.0/direct?q=${trimmedInput}&limit=1&appid=${APIKey}`;
         }
         
-        const data = await response.json();
+        const geoResponse = await fetch(geocodingURL);
+        if (!geoResponse.ok) {
+            throw new Error(`Location not found. Please check your input. (${geoResponse.status})`);
+        }
+        
+        const geoData = await geoResponse.json();
+        
+        let lat, lon, cityName;
+        if (Array.isArray(geoData)) {
+            if (geoData.length === 0) {
+                throw new Error('Location not found');
+            }
+            lat = geoData[0].lat;
+            lon = geoData[0].lon;
+            cityName = geoData[0].name;
+        } else {
+            // ZIP response is an object
+            lat = geoData.lat;
+            lon = geoData.lon;
+            cityName = geoData.name;
+        }
+        
+        // Update q for history
+        q = cityName;
+        
+        // Step 2: Get weather data using coordinates
+        const weatherURL = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${APIKey}`;
+        const weatherResponse = await fetch(weatherURL);
+        
+        if (!weatherResponse.ok) {
+            throw new Error(`Weather data unavailable. (${weatherResponse.status})`);
+        }
+        
+        const data = await weatherResponse.json();
         console.log(data);
         
         // Clear previous content
@@ -109,7 +211,7 @@ async function getWeather(q) {
         cityMain1.className = "col-12";
         
         const title = document.createElement("h2");
-        title.textContent = `${data.name} (${currentDate})`;
+        title.textContent = `${cityName} (${currentDate})`;
         cityMain1.appendChild(title);
         
         const image = document.createElement("img");
@@ -133,7 +235,7 @@ async function getWeather(q) {
         document.getElementById("cityList").appendChild(cityMain1);
         
         // Display forecast
-        await displayForecast(data.coord.lat, data.coord.lon);
+        await displayForecast(lat, lon);
         
     } catch (error) {
         showError(error.message);
@@ -155,65 +257,88 @@ async function getWeather(q) {
 // 	});
 // }
 //function to Display 5 Day forecast
-function displayForecast(lat, lon) {
-	$.ajax({
-		// gets the 5 day forecast API
-		url:
-			"https://api.openweathermap.org/data/2.5/forecast?lat=" +
-			lat +
-			"&lon=" +
-			lon +
-			"&units=imperial&APPID=" +
-			APIKey,
-		method: "GET",
-	}).then(function (response) {
-		//  Parse response to display forecast for next 5 days underneath current conditions
-		var arrayList = response.list;
-		for (var i = 0; i < arrayList.length; i++) {
-			if (arrayList[i].dt_txt.split(" ")[1] === "12:00:00") {
-				console.log(arrayList[i]);
-				var celcius = convertToC(arrayList[i].main.temp); //converting F to Celsius
-				var cityMain = $("<div>");
-				cityMain.addClass(
-					"col-lg-2 col-md-4 col-sm-6 forecast bg-primary text-white ml-3 mb-3 rounded p-2"
-				);
-				var date5 = $("<h5>").text(response.list[i].dt_txt.split(" ")[0]);
-				var image = $("<img>").attr(
-					"src",
-					"http://openweathermap.org/img/w/" +
-						arrayList[i].weather[0].icon +
-						".png"
-				);
-				var degreeMain = $("<p>").text(
-					"Temp : " + arrayList[i].main.temp + " °F (" + celcius + "°C)"
-				);
-				var humidityMain = $("<p>").text(
-					"Humidity : " + arrayList[i].main.humidity + "%"
-				);
-				var windMain = $("<p>").text(
-					"Wind Speed : " + arrayList[i].wind.speed + "MPH"
-				);
-				cityMain
-					.append(date5)
-					.append(image)
-					.append(degreeMain)
-					.append(humidityMain)
-					.append(windMain);
-				$("#days").append(cityMain);
-			}
-		}
-	});
+async function displayForecast(lat, lon) {
+    try {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${APIKey}`);
+        
+        if (!response.ok) {
+            throw new Error(`Forecast API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Parse response to display forecast for next 5 days
+        const arrayList = data.list;
+        for (let i = 0; i < arrayList.length; i++) {
+            if (arrayList[i].dt_txt.split(" ")[1] === "12:00:00") {
+                console.log(arrayList[i]);
+                const celsius = convertToC(arrayList[i].main.temp);
+                
+                const cityMain = document.createElement("div");
+                cityMain.className = "col-lg-2 col-md-4 col-sm-6 forecast bg-primary text-white ml-3 mb-3 rounded p-2";
+                
+                const date5 = document.createElement("h5");
+                date5.textContent = arrayList[i].dt_txt.split(" ")[0];
+                cityMain.appendChild(date5);
+                
+                const image = document.createElement("img");
+                image.src = `http://openweathermap.org/img/w/${arrayList[i].weather[0].icon}.png`;
+                image.alt = arrayList[i].weather[0].description;
+                cityMain.appendChild(image);
+                
+                const degreeMain = document.createElement("p");
+                degreeMain.textContent = `Temp: ${arrayList[i].main.temp} °F (${celsius}°C)`;
+                cityMain.appendChild(degreeMain);
+                
+                const humidityMain = document.createElement("p");
+                humidityMain.textContent = `Humidity: ${arrayList[i].main.humidity}%`;
+                cityMain.appendChild(humidityMain);
+                
+                const windMain = document.createElement("p");
+                windMain.textContent = `Wind Speed: ${arrayList[i].wind.speed} MPH`;
+                cityMain.appendChild(windMain);
+                
+                document.getElementById("days").appendChild(cityMain);
+            }
+        }
+    } catch (error) {
+        console.error("Forecast error:", error);
+        showError("Failed to load forecast data.");
+    }
 }
-// Display automatic Current Locaion
+// Display automatic Current Location
 function currentLocation() {
-	$.ajax({
-		url: "https://freegeoip.app/json/",
-		method: "GET",
-	}).then(function (response) {
-		q = response.city || "exton";
-		console.log(q);
-		getWeather(q);
-	});
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            try {
+                // Use OpenWeatherMap reverse geocoding
+                const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${APIKey}`);
+                const data = await response.json();
+                
+                if (data.length > 0) {
+                    q = data[0].name;
+                } else {
+                    q = "London"; // fallback
+                }
+                getWeather(q);
+            } catch (error) {
+                console.error("Reverse geocoding error:", error);
+                q = "London"; // fallback
+                getWeather(q);
+            }
+        }, (error) => {
+            console.error("Geolocation failed:", error);
+            q = "London"; // fallback
+            getWeather(q);
+        });
+    } else {
+        console.log("Geolocation not supported");
+        q = "London"; // fallback
+        getWeather(q);
+    }
 }
 
 // Function to get data store in Locaal Storage
@@ -245,8 +370,8 @@ function saveToLocalStorage(q) {
 		createRecentSearchBtn(q);
 	}
 }
-//added clear histor fuction to clear searched city list
-$("#clear-history").on("click", function (event) {
-	$("#historyList").empty();
-	localStorage.removeItem("queries");
+// Clear history function
+document.getElementById("clear-history").addEventListener("click", function (event) {
+    document.getElementById("historyList").innerHTML = "";
+    localStorage.removeItem("queries");
 });
