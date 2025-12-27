@@ -5,6 +5,10 @@ body{
     background-repeat: no-repeat ;
     background-attachment: fixed;
 }
+/* Container max width */
+.container {
+    max-width: 90%;
+}
 /* Header text */
 .header-text {
     font-size:3rem;
@@ -84,10 +88,9 @@ body{
   float: right;
   margin-right: 50%;
 }
-/* searched city button  */
-li{
-  margin-bottom: 10px;
-  margin-left: -40px;
+/* searched city list */
+#historyList {
+    list-style: none;
 }
 /*Large devices (desktops, 992px and up) */
 @media only screen and (max-width:992px) {
@@ -122,5 +125,5 @@ li{
 }
 }
 #days{
-margin-left: -25px;
+margin-left: 0px;
 }
