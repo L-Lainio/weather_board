@@ -55,10 +55,3 @@ Search history is managed through a JSON-parsed array in localStorage. This ensu
 1. Clone the repo: `git clone https://github.com/L-Lainio/weather_board.git`
 2. Open `index.html` via Live Server in VS Code.
 3. Add your own OpenWeatherMap API key in the `assets/config.js` file.
-
-## 📧 Contact
-
-Let's connect! Whether you have a question about this project or just want to say hi:
-
-[![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/lora-lainio-1a3a55255/)
-[![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:lora.lainio.it@gmail.com)
