@@ -79,6 +79,9 @@ web_modules/
 .env.production.local
 .env.local
 
+# Config files with sensitive data
+assets/config.js
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

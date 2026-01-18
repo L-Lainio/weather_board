@@ -2,8 +2,10 @@
 // IMPORTANT: Replace with your own OpenWeatherMap API key
 // Get one at: https://openweathermap.org/api
 // 
-// ⚠️ SECURITY: Never commit this file with real API keys!
-// This file is now ignored by git. Use config.example.js as a template.
+// SETUP INSTRUCTIONS:
+// 1. Copy this file and rename it to "config.js"
+// 2. Replace 'YOUR_API_KEY_HERE' with your actual API key
+// 3. Never commit the real config.js file to git
 
 const CONFIG = {
     OPENWEATHER_API_KEY: 'YOUR_API_KEY_HERE', // Replace with your API key
